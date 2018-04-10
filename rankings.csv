@@ -1,0 +1,6 @@
+Alice,Bob;Carol;Daniel;Eloise;Frank
+Bob,Carol;Alice;Eloise;Frank;Daniel
+Carol,Bob;Alice;Eloise;Daniel;Frank
+Daniel,Eloise;Frank;Carol;Bob;Alice
+Eloise,Frank;Daniel;Alice;Carol;Bob
+Frank,Daniel;Bob;Carol;Eloise;Alice
