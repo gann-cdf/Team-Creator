@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Team Creator:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Team_Creator_jar</output-path>
+    <root id="archive" name="Team Creator.jar">
+      <element id="module-output" name="Team Creator" />
+    </root>
+  </artifact>
+</component>
