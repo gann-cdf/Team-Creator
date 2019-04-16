@@ -3,6 +3,7 @@ package teamCreator.core;
 import java.util.*;
 
 public class Node {
+    private static final String DISTANCE_SEPARATOR = " → ";
     private List<String> members;
     private Map<Node, Edge> edges;
 
@@ -20,12 +21,14 @@ public class Node {
         members.addAll(other.members);
         Iterator<Map.Entry<Node, Edge>> iterator = other.edges.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Node, Edge> neighbor = iterator.next();
-            if (neighbor.getKey() != this) {
-                if (edges.get(neighbor.getKey()) != null) {
-                    edges.get(neighbor.getKey()).merge(neighbor.getValue());
+            Map.Entry<Node, Edge> neighborDistancePair = iterator.next();
+            Node neighbor = neighborDistancePair.getKey();
+            Edge edgeToNeighbor = neighborDistancePair.getValue();
+            if (neighbor != this) {
+                if (edges.get(neighbor) != null) {
+                    edges.get(neighbor).merge(edgeToNeighbor);
                 } else {
-                    addEdge(neighbor.getKey(), neighbor.getValue());
+                    addEdge(neighbor, edgeToNeighbor);
                 }
             }
         }
@@ -36,15 +39,17 @@ public class Node {
     }
 
     public ArrayList<Node> neighbors(int distance) {
-        ArrayList<Node> neighbors = new ArrayList<>();
-        Iterator<Map.Entry<Node,Edge>> iterator = edges.entrySet().iterator();
+        ArrayList<Node> nearbyNeighbors = new ArrayList<>();
+        Iterator<Map.Entry<Node, Edge>> iterator = edges.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Node, Edge> pair = iterator.next();
-            if (pair.getValue().getDistance() <= distance && pair.getKey().distanceTo(this) <= distance) {
-                neighbors.add(pair.getKey());
+            Map.Entry<Node, Edge> neighborDistancePair = iterator.next();
+            Node neighbor = neighborDistancePair.getKey();
+            Edge edgeToNeighbor = neighborDistancePair.getValue();
+            if (edgeToNeighbor.getDistance() <= distance && neighbor.distanceTo(this) <= distance) {
+                nearbyNeighbors.add(neighbor);
             }
         }
-        return neighbors;
+        return nearbyNeighbors;
     }
 
     private int distanceTo(Node other) {
@@ -56,11 +61,17 @@ public class Node {
     }
 
     public String shortName() {
-        String result = "";
+        List<String> names = new ArrayList<>();
         for (String member : members) {
-            result += member.substring(0, 1);
+            String name = "";
+            for (int i = 0; i < member.length(); i++) {
+                if (i == 0 || member.charAt(i - 1) == ' ') {
+                    name += member.charAt(i);
+                }
+            }
+            names.add(name);
         }
-        return result;
+        return String.join(",", names);
     }
 
     public String toString() {
@@ -69,8 +80,9 @@ public class Node {
         Iterator<Map.Entry<Node, Edge>> iterator = edges.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Node, Edge> pair = iterator.next();
-            distances.add(pair.getValue().getDistance() + " → " + pair.getKey().shortName());
+            distances.add(pair.getValue().getDistance() + DISTANCE_SEPARATOR + pair.getKey().shortName());
         }
+        distances.sort(Comparator.comparing(o -> new Integer(o.substring(0, o.indexOf(DISTANCE_SEPARATOR)))));
         return result + ": " + String.join(", ", distances) + "]";
     }
 
@@ -80,6 +92,10 @@ public class Node {
 
     public List<String> getMembers() {
         return members;
+    }
+
+    public Map<Node, Edge> getEdges() {
+        return edges;
     }
 
     public boolean isIsolated() {

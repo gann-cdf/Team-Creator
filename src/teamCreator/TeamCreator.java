@@ -22,11 +22,6 @@ public class TeamCreator {
     private JFrame frame;
     private CSVReader csv;
     private File workingDirectory;
-    private Graph teams;
-
-    public static final int MAX_DISTANCE = 1000;
-
-    ;
 
     public void handleOpenFile(Format format, int nameIndex, int prefStartIndex, int prefEndIndex) {
         JFileChooser fileChooser = new JFileChooser();
@@ -77,13 +72,31 @@ public class TeamCreator {
                 }
                 Generating progress = new Generating();
                 swapContentPane(progress.getPanel());
-                teams = new Graph(csv.getData(), merge);
+
+                Graph teams = new Graph(csv.getData(), merge);
+
+                // find the longest edge in the graph
+                int maxDistance = teams.getLongestEdge();
+
+                // based on the merge algorithm, calculage the longest possible edge we want to consider
+                switch (merge) {
+                    case Summing:
+                        // nth triangular number -- https://math.stackexchange.com/a/60581
+                        maxDistance = (int) Math.ceil((Math.pow(maxDistance, 2) + maxDistance) / 2);
+                        break;
+                    case Averaging:
+                    case Maximizing:
+                    default:
+                        // just use our discovered maxDistance
+                        break;
+                }
                 progress.update(25);
                 if (audit) {
                     logWriter.write(teams + "\n");
-                    logWriter.write("Collapsing " + teams.count() + " teams to " + targetTeams + " teams of no more than " + targetTeamSize + " members " + String.valueOf(merge).toLowerCase() + " edges\n\n");
+                    logWriter.write("Collapsing " + teams.count() + " teams to " + targetTeams + " teams of no more than " + targetTeamSize + " members " + String.valueOf(merge).toLowerCase() + " edges, collapsing to a maximum distance of " + maxDistance + "\n\n");
                 }
-                for (int distance = 0; teams.count() > targetTeams && distance < MAX_DISTANCE; distance++) {
+
+                for (int distance = 0; teams.count() > targetTeams && distance <= maxDistance; distance++) {
                     teams.collapse(distance, targetTeamSize);
                     progress.update(25 + 75 * (targetTeams / teams.count()));
                     if (audit) {

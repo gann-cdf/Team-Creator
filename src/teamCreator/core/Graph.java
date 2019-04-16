@@ -15,57 +15,97 @@ public class Graph {
     }
 
     public Graph(Map<String, List<String>> data, MergeType merge) {
-        Map<String, Node> map = new HashMap<>();
+        Map<String, Node> nameDirectory = new HashMap<>();
         Iterator<Map.Entry<String, List<String>>> iterator = data.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<String, List<String>> pair = iterator.next();
-            if (pair.getKey().length() > 0) {
-                Node n = getIfExists(map, pair.getKey());
-                for (int distance = 0; distance < pair.getValue().size(); distance++) {
-                    if (pair.getValue().get(distance) != null && !pair.getKey().equals(pair.getValue().get(distance))) {
-                        Edge e = null;
-                        switch (merge) {
-                            case Summing:
-                                e = new EdgeSumMerge(distance);
-                                break;
-                            case Maximizing:
-                                e = new EdgeMaxMerge(distance);
-                                break;
-                            case Averaging:
-                                e = new EdgeAverageMerge(distance);
-                                break;
-                        }
-                        n.addEdge(getIfExists(map, pair.getValue().get(distance)), e);
+            Map.Entry<String, List<String>> namePreferencesPair = iterator.next();
+            String myName = namePreferencesPair.getKey();
+            List<String> myPreferences = namePreferencesPair.getValue();
+            if (myName.length() > 0) {
+                Node n = createIfNotExisting(nameDirectory, myName);
+                for (int ranking = 0; ranking < myPreferences.size(); ranking++) {
+                    String neighborName = myPreferences.get(ranking);
+                    if (neighborName != null && !myName.equals(neighborName)) {
+                        n.addEdge(createIfNotExisting(nameDirectory, neighborName), createEdge(merge, ranking));
                     }
                 }
             }
         }
-        for (String key : map.keySet()) {
-            if (map.get(key).isIsolated()) {
-                for (String neighbor : map.keySet()) {
-                    if (!key.equals(neighbor)) {
-                        Edge e = null;
-                        int distance = map.size() / 2;
-                        switch (merge) {
-                            case Summing:
-                                e = new EdgeSumMerge(distance);
-                                break;
-                            case Maximizing:
-                                e = new EdgeMaxMerge(distance);
-                                break;
-                            case Averaging:
-                                e = new EdgeAverageMerge(distance);
-                                break;
-                        }
-                        map.get(key).addEdge(map.get(neighbor), e);
-                    }
-                }
-            }
-        }
-        nodes = new ArrayList<>(map.values());
+        nodes = new ArrayList<>(nameDirectory.values());
+        completeConnections(merge);
     }
 
-    private Node getIfExists(Map<String, Node> map, String key) {
+    private Edge createEdge(MergeType merge, int distance) {
+        Edge e = null;
+        switch (merge) {
+            case Summing:
+                e = new EdgeSumMerge(distance);
+                break;
+            case Maximizing:
+                e = new EdgeMaxMerge(distance);
+                break;
+            case Averaging:
+                e = new EdgeAverageMerge(distance);
+                break;
+        }
+        return e;
+    }
+
+    /**
+     * Make the graph completely connected
+     * <p>
+     * The pre-existing median edge length will be used for all newly created edges
+     *
+     * @param merge The type of edge-merge operation requested
+     */
+    private void completeConnections(MergeType merge) {
+        int arbitraryDistance = getMedianEdge();
+        for (Node n : nodes) {
+            for (Node neighbor : nodes) {
+                if (neighbor != n && !n.getEdges().keySet().contains(neighbor)) {
+                    n.addEdge(neighbor, createEdge(merge, arbitraryDistance));
+                }
+            }
+        }
+    }
+
+    /**
+     * @return The longest edge in the graph
+     */
+    public int getLongestEdge() {
+        int maxDistance = 0;
+        for (Node n : nodes) {
+            for (Edge e : n.getEdges().values()) {
+                if (e.getDistance() > maxDistance) {
+                    maxDistance = e.getDistance();
+                }
+            }
+        }
+        return maxDistance;
+    }
+
+    /**
+     * @return The median edge value in the graph
+     */
+    public int getMedianEdge() {
+        List<Integer> distances = new ArrayList<>();
+        for (Node n : nodes) {
+            for (Edge e : n.getEdges().values()) {
+                distances.add(e.getDistance());
+            }
+        }
+        distances.sort(Integer::compareTo);
+        return distances.get(distances.size() / 2);
+    }
+
+    /**
+     * Ensure that the requested key exists in the map and return it
+     *
+     * @param map The map to examine
+     * @param key The key to look for
+     * @return The node (now in the map) for the key
+     */
+    private Node createIfNotExisting(Map<String, Node> map, String key) {
         key = key.trim();
         if (!map.containsKey(key)) {
             map.put(key, new Node(key));
@@ -81,18 +121,18 @@ public class Graph {
     }
 
     public void collapse(int distance, int maxClusterSize) {
-        List<Node> purge = new ArrayList<>();
+        List<Node> merged = new ArrayList<>();
         for (Node n : nodes) {
-            if (!purge.contains(n)) {
+            if (!merged.contains(n)) {
                 for (Node neighbor : n.neighbors(distance)) {
-                    if (n != neighbor && !purge.contains(neighbor) && n.size() + neighbor.size() <= maxClusterSize) {
-                        purge.add(neighbor);
+                    if (n != neighbor && !merged.contains(neighbor) && n.size() + neighbor.size() <= maxClusterSize) {
                         n.merge(neighbor);
+                        merged.add(neighbor);
                     }
                 }
             }
         }
-        for(Node n : purge) {
+        for (Node n : merged) {
             remove(n);
         }
     }
