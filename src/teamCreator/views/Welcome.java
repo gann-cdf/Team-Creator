@@ -3,28 +3,65 @@ package teamCreator.views;
 import teamCreator.TeamCreator;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 public class Welcome {
     private JButton openCSVFileButton;
     private JButton quitButton;
     private JPanel panel;
+    private JComboBox format;
+    private JTextField nameIndex;
+    private JTextField prefStartIndex;
+    private JTextField prefEndIndex;
+    private JLabel formatDescription;
+    private JLabel nameIndexLabel;
+    private JLabel prefStartIndexLabel;
+    private JLabel prefEndIndexLabel;
 
     public Welcome(TeamCreator controller) {
         openCSVFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.handleOpenFile();
+                if ("Office 365".equals(format.getSelectedItem())) {
+                    controller.handleOpenFile(TeamCreator.Format.Office365, 0, 0, 0);
+                } else if ("SurveyMonkey".equals(format.getSelectedItem())) {
+                    if (nameIndex.getText().length() > 0 && prefStartIndex.getText().length() > 0 && prefEndIndex.getText().length() > 0) {
+                        controller.handleOpenFile(TeamCreator.Format.SurveyMonkey, new Integer(nameIndex.getText()), new Integer(prefStartIndex.getText()), new Integer(prefEndIndex.getText()));
+                    }
+                }
             }
         });
         quitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.exit(0);
+            }
+        });
+        format.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    if ("Office 365".equals(format.getSelectedItem())) {
+                        formatDescription.setText("<html><p>This program expects a 2-column CSV file.</p><p>The first column is a list of the participants' names and the second column is a semicolon-separated list of that participants ranking (from most to least desired) of the other participants.</p></html>");
+                        nameIndex.setVisible(false);
+                        nameIndexLabel.setVisible(false);
+                        prefStartIndex.setVisible(false);
+                        prefStartIndexLabel.setVisible(false);
+                        prefEndIndex.setVisible(false);
+                        prefEndIndexLabel.setVisible(false);
+                    } else if ("SurveyMonkey".equals(format.getSelectedItem())) {
+                        formatDescription.setText("<html><p>This program expects a CSV file with a first row of questions, followed by a row of column headers, followed by survey responses.</p><p>The respondent's name should be in one column (nameIndex, zero-indexed), while the rankings of other people are numerically represented in a contiguous block of columns from prefStartIndex to prefEndIndex (zero-indexed).</p></html>");
+                        nameIndex.setVisible(true);
+                        nameIndexLabel.setVisible(true);
+                        prefStartIndex.setVisible(true);
+                        prefStartIndexLabel.setVisible(true);
+                        prefEndIndex.setVisible(true);
+                        prefEndIndexLabel.setVisible(true);
+                    }
+                }
             }
         });
     }

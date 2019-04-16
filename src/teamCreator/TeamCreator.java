@@ -3,8 +3,8 @@ package teamCreator;
 import csv.CSVReader;
 import csv.CSVWriter;
 import teamCreator.core.Graph;
-import teamCreator.core.merges.MergeType;
 import teamCreator.core.Node;
+import teamCreator.core.merges.MergeType;
 import teamCreator.views.Generating;
 import teamCreator.views.Parameters;
 import teamCreator.views.Welcome;
@@ -24,6 +24,28 @@ public class TeamCreator {
     private File workingDirectory;
     private Graph teams;
 
+    public static final int MAX_DISTANCE = 1000;
+
+    ;
+
+    public void handleOpenFile(Format format, int nameIndex, int prefStartIndex, int prefEndIndex) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new FileNameExtensionFilter("CSV file", "csv"));
+        fileChooser.setCurrentDirectory(workingDirectory);
+        if (fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
+            workingDirectory = fileChooser.getSelectedFile().getParentFile();
+            switch (format) {
+                case SurveyMonkey:
+                    csv = CSVReader.parseSurveyMonkeyResponses(fileChooser.getSelectedFile(), nameIndex, prefStartIndex, prefEndIndex);
+                    break;
+                case Office365:
+                    csv = CSVReader.parseOffice365Responses(fileChooser.getSelectedFile());
+                    break;
+            }
+            swapContentPane(new Parameters(this, csv.getData().size()).getPanel());
+        }
+    }
+
     public TeamCreator() {
         workingDirectory = new File(".");
         frame = new JFrame("TeamCreator");
@@ -40,17 +62,6 @@ public class TeamCreator {
 
     public void handleStart() {
         swapContentPane(new Welcome(this).getPanel());
-    }
-
-    public void handleOpenFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new FileNameExtensionFilter("CSV file", "csv"));
-        fileChooser.setCurrentDirectory(workingDirectory);
-        if (fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
-            workingDirectory = fileChooser.getSelectedFile().getParentFile();
-            csv = new CSVReader(fileChooser.getSelectedFile());
-            swapContentPane(new Parameters(this, csv.getData().size()).getPanel());
-        }
     }
 
     public void handleParameters(int targetTeams, int targetTeamSize, MergeType merge, boolean audit) {
@@ -72,18 +83,22 @@ public class TeamCreator {
                     logWriter.write(teams + "\n");
                     logWriter.write("Collapsing " + teams.count() + " teams to " + targetTeams + " teams of no more than " + targetTeamSize + " members " + String.valueOf(merge).toLowerCase() + " edges\n\n");
                 }
-                for (int distance = 0; teams.count() > targetTeams; distance++) {
+                for (int distance = 0; teams.count() > targetTeams && distance < MAX_DISTANCE; distance++) {
                     teams.collapse(distance, targetTeamSize);
-                    progress.update(25 +  75 * (targetTeams/teams.count()));
-                    if (audit)
+                    progress.update(25 + 75 * (targetTeams / teams.count()));
+                    if (audit) {
                         logWriter.write("Collapse mutual distances of " + distance + " or less, resulting in " + teams);
+                    }
                 }
-                if (audit) logWriter.close();
+                if (audit) {
+                    logWriter.write("Final teams are " + teams);
+                    logWriter.close();
+                }
                 List<List<String>> rosters = new ArrayList<>();
                 int team = 1;
                 for (Node n : teams.getNodes()) {
                     List<String> roster = new ArrayList<>(n.getMembers());
-                    roster.add(0,"Team " + team++);
+                    roster.add(0, "Team " + team++);
                     rosters.add(roster);
                 }
                 rosterWriter.writeLists(rosters);
@@ -94,6 +109,8 @@ public class TeamCreator {
             }
         }
     }
+
+    public enum Format {SurveyMonkey, Office365}
 
     public static void main(String[] args) {
         new TeamCreator();

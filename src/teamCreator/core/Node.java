@@ -18,11 +18,15 @@ public class Node {
 
     public void merge(Node other) {
         members.addAll(other.members);
-        Iterator<Map.Entry<Node, Edge>> iterator = edges.entrySet().iterator();
+        Iterator<Map.Entry<Node, Edge>> iterator = other.edges.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Node, Edge> pair = iterator.next();
-            if (pair.getKey() != other) {
-                pair.getValue().merge(other.edges.get(pair.getKey()));
+            Map.Entry<Node, Edge> neighbor = iterator.next();
+            if (neighbor.getKey() != this) {
+                if (edges.get(neighbor.getKey()) != null) {
+                    edges.get(neighbor.getKey()).merge(neighbor.getValue());
+                } else {
+                    addEdge(neighbor.getKey(), neighbor.getValue());
+                }
             }
         }
     }
@@ -76,5 +80,9 @@ public class Node {
 
     public List<String> getMembers() {
         return members;
+    }
+
+    public boolean isIsolated() {
+        return edges.isEmpty();
     }
 }
