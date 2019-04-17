@@ -59,7 +59,7 @@ public class TeamCreator {
         swapContentPane(new Welcome(this).getPanel());
     }
 
-    public void handleParameters(int targetTeams, int targetTeamSize, MergeType merge, boolean audit) {
+    public void handleParameters(int targetTeams, int targetTeamSize, Graph.IslandAvoidance islandAvoidance, MergeType merge, boolean audit) {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new FileNameExtensionFilter("CSV file", "csv"));
         fileChooser.setCurrentDirectory(workingDirectory);
@@ -73,7 +73,7 @@ public class TeamCreator {
                 Generating progress = new Generating();
                 swapContentPane(progress.getPanel());
 
-                Graph teams = new Graph(csv.getData(), merge);
+                Graph teams = new Graph(csv.getData(), islandAvoidance, merge);
 
                 // find the longest edge in the graph
                 int maxDistance = teams.getLongestEdge();
@@ -96,15 +96,17 @@ public class TeamCreator {
                     logWriter.write("Collapsing " + teams.count() + " teams to " + targetTeams + " teams of no more than " + targetTeamSize + " members " + String.valueOf(merge).toLowerCase() + " edges, collapsing to a maximum distance of " + maxDistance + "\n\n");
                 }
 
+                int prevCount = 0;
                 for (int distance = 0; teams.count() > targetTeams && distance <= maxDistance; distance++) {
                     teams.collapse(distance, targetTeamSize);
                     progress.update(25 + 75 * (targetTeams / teams.count()));
-                    if (audit) {
+                    if (teams.count() != prevCount && audit) {
                         logWriter.write("Collapse mutual distances of " + distance + " or less, resulting in " + teams);
+                        prevCount = teams.count();
                     }
                 }
                 if (audit) {
-                    logWriter.write("Final teams are " + teams);
+                    logWriter.write("Final " + teams);
                     logWriter.close();
                 }
                 List<List<String>> rosters = new ArrayList<>();

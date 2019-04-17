@@ -11,10 +11,12 @@ public class Graph {
     private List<Node> nodes;
 
     public Graph(Map<String, List<String>> data) {
-        this(data, MergeType.Maximizing);
+        this(data, IslandAvoidance.CompletionMedian, MergeType.Maximizing);
     }
 
-    public Graph(Map<String, List<String>> data, MergeType merge) {
+    ;
+
+    public Graph(Map<String, List<String>> data, IslandAvoidance islandAvoidance, MergeType merge) {
         Map<String, Node> nameDirectory = new HashMap<>();
         Iterator<Map.Entry<String, List<String>>> iterator = data.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -32,7 +34,47 @@ public class Graph {
             }
         }
         nodes = new ArrayList<>(nameDirectory.values());
-        completeConnections(merge);
+        switch (islandAvoidance) {
+            case CompletionMedian:
+            case CompletionMax:
+            case CompletionMin:
+                completeConnections(islandAvoidance, merge);
+                break;
+            case LeaveIslands:
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Make the graph completely connected
+     * <p>
+     * The pre-existing median edge length will be used for all newly created edges
+     *
+     * @param merge The type of edge-merge operation requested
+     */
+    public void completeConnections(IslandAvoidance islandAvoidance, MergeType merge) {
+        int arbitraryDistance;
+        switch (islandAvoidance) {
+            case CompletionMax:
+                arbitraryDistance = getLongestEdge();
+                break;
+            case CompletionMedian:
+                arbitraryDistance = getMedianEdge();
+                break;
+            case CompletionMin:
+                arbitraryDistance = getShortestEdge();
+                break;
+            default:
+                return;
+        }
+        for (Node n : nodes) {
+            for (Node neighbor : nodes) {
+                if (neighbor != n && !n.getEdges().keySet().contains(neighbor)) {
+                    n.addEdge(neighbor, createEdge(merge, arbitraryDistance));
+                }
+            }
+        }
     }
 
     private Edge createEdge(MergeType merge, int distance) {
@@ -51,22 +93,29 @@ public class Graph {
         return e;
     }
 
-    /**
-     * Make the graph completely connected
-     * <p>
-     * The pre-existing median edge length will be used for all newly created edges
-     *
-     * @param merge The type of edge-merge operation requested
-     */
-    private void completeConnections(MergeType merge) {
-        int arbitraryDistance = getMedianEdge();
+    public int getShortestEdge() {
+        int minDistance = Integer.MAX_VALUE;
         for (Node n : nodes) {
-            for (Node neighbor : nodes) {
-                if (neighbor != n && !n.getEdges().keySet().contains(neighbor)) {
-                    n.addEdge(neighbor, createEdge(merge, arbitraryDistance));
+            for (Edge e : n.getEdges().values()) {
+                if (e.getDistance() < minDistance) {
+                    minDistance = e.getDistance();
                 }
             }
         }
+        return minDistance;
+    }
+
+    private void merge(Node consumer, Node consumed) {
+        consumer.merge(consumed);
+        for (Node n : nodes) {
+            if (n != consumer && n != consumed) {
+                n.getEdges().get(consumer).merge(n.getEdges().get(consumed));
+            }
+            if (n != consumed) {
+                n.remove(consumed);
+            }
+        }
+        nodes.remove(consumed);
     }
 
     /**
@@ -113,29 +162,25 @@ public class Graph {
         return map.get(key);
     }
 
-    private void remove(Node n) {
-        for (Node m : nodes) {
-            m.remove(n);
-        }
-        nodes.remove(n);
-    }
-
     public void collapse(int distance, int maxClusterSize) {
-        List<Node> merged = new ArrayList<>();
-        for (Node n : nodes) {
-            if (!merged.contains(n)) {
+        boolean nodesMerged;
+        do {
+            nodesMerged = false;
+            int randomFirstIndex = (int) (Math.random() * nodes.size());
+            for (int i = (randomFirstIndex + 1) % nodes.size(); !nodesMerged && i != randomFirstIndex; i = (i + 1) % nodes.size()) {
+                Node n = nodes.get(i);
                 for (Node neighbor : n.neighbors(distance)) {
-                    if (n != neighbor && !merged.contains(neighbor) && n.size() + neighbor.size() <= maxClusterSize) {
-                        n.merge(neighbor);
-                        merged.add(neighbor);
+                    if (n != neighbor && n.size() + neighbor.size() <= maxClusterSize) {
+                        merge(n, neighbor);
+                        nodesMerged = true;
+                        break;
                     }
                 }
             }
-        }
-        for (Node n : merged) {
-            remove(n);
-        }
+        } while (nodesMerged);
     }
+
+    public enum IslandAvoidance {CompletionMedian, CompletionMax, CompletionMin, LeaveIslands}
 
     public int count() {
         return nodes.size();

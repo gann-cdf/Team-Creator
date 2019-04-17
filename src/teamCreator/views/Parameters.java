@@ -1,6 +1,7 @@
 package teamCreator.views;
 
 import teamCreator.TeamCreator;
+import teamCreator.core.Graph;
 import teamCreator.core.merges.MergeType;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ public class Parameters implements DocumentListener {
     private JCheckBox syncTeamSize;
     private JCheckBox saveAuditLog;
     private JComboBox mergeType;
+    private JComboBox islandAvoidance;
 
     public Parameters(TeamCreator controller, int count) {
         this.count = count;
@@ -32,6 +34,7 @@ public class Parameters implements DocumentListener {
                 controller.handleParameters(
                         Integer.valueOf(teams.getText()),
                         Integer.valueOf(teamSize.getText()),
+                        (Graph.IslandAvoidance) islandAvoidance.getSelectedItem(),
                         (MergeType) mergeType.getSelectedItem(),
                         saveAuditLog.isSelected()
                 );
@@ -71,6 +74,7 @@ public class Parameters implements DocumentListener {
     }
 
     private void createUIComponents() {
+        islandAvoidance = new JComboBox(Graph.IslandAvoidance.values());
         mergeType = new JComboBox(MergeType.values());
     }
 }
