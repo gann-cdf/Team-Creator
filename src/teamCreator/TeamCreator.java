@@ -78,7 +78,7 @@ public class TeamCreator {
                 // find the longest edge in the graph
                 int maxDistance = teams.getLongestEdge();
 
-                // based on the merge algorithm, calculage the longest possible edge we want to consider
+                // based on the merge algorithm, calculate the longest possible edge we want to consider
                 switch (merge) {
                     case Summing:
                         // nth triangular number -- https://math.stackexchange.com/a/60581

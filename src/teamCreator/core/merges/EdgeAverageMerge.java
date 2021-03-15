@@ -9,6 +9,6 @@ public class EdgeAverageMerge extends Edge {
 
     @Override
     public void merge(Edge other) {
-        setDistance((int) Math.ceil((double) getDistance() + other.getDistance() / 2));
+        setDistance((int) Math.ceil((double) getDistance() + other.getDistance() / 2.0));
     }
 }

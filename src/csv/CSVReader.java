@@ -43,7 +43,7 @@ public class CSVReader {
                 String[] preferences = new String[prefEndIndex - prefStartIndex + 1];
                 for (int i = prefStartIndex; i <= prefEndIndex && i < parts.length; i++) {
                     if (!columns[i].equals(parts[nameIndex]) && parts[i].length() > 0) {
-                        preferences[new Integer(parts[i]) - 1] = columns[i];
+                        preferences[Integer.valueOf(parts[i]) - 1] = columns[i];
                     }
                 }
                 csv.data.put(parts[nameIndex], Arrays.asList(preferences));

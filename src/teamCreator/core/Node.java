@@ -19,9 +19,7 @@ public class Node {
 
     public void merge(Node other) {
         members.addAll(other.members);
-        Iterator<Map.Entry<Node, Edge>> iterator = other.edges.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Node, Edge> neighborDistancePair = iterator.next();
+        for (Map.Entry<Node, Edge> neighborDistancePair : other.edges.entrySet()) {
             Node neighbor = neighborDistancePair.getKey();
             Edge edgeToNeighbor = neighborDistancePair.getValue();
             if (neighbor != this) {
@@ -40,9 +38,7 @@ public class Node {
 
     public ArrayList<Node> neighbors(int distance) {
         ArrayList<Node> nearbyNeighbors = new ArrayList<>();
-        Iterator<Map.Entry<Node, Edge>> iterator = edges.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Node, Edge> neighborDistancePair = iterator.next();
+        for (Map.Entry<Node, Edge> neighborDistancePair : edges.entrySet()) {
             Node neighbor = neighborDistancePair.getKey();
             Edge edgeToNeighbor = neighborDistancePair.getValue();
             if (edgeToNeighbor.getDistance() <= distance && neighbor.distanceTo(this) <= distance) {
@@ -63,13 +59,13 @@ public class Node {
     public String shortName() {
         List<String> names = new ArrayList<>();
         for (String member : members) {
-            String name = "";
+            StringBuilder name = new StringBuilder();
             for (int i = 0; i < member.length(); i++) {
                 if (i == 0 || member.charAt(i - 1) == ' ') {
-                    name += member.charAt(i);
+                    name.append(member.charAt(i));
                 }
             }
-            names.add(name);
+            names.add(name.toString());
         }
         return String.join(",", names);
     }
@@ -77,12 +73,10 @@ public class Node {
     public String toString() {
         String result = "[" + String.join(", ", members);
         ArrayList<String> distances = new ArrayList<>();
-        Iterator<Map.Entry<Node, Edge>> iterator = edges.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<Node, Edge> pair = iterator.next();
+        for (Map.Entry<Node, Edge> pair : edges.entrySet()) {
             distances.add(pair.getValue().getDistance() + DISTANCE_SEPARATOR + pair.getKey().shortName());
         }
-        distances.sort(Comparator.comparing(o -> new Integer(o.substring(0, o.indexOf(DISTANCE_SEPARATOR)))));
+        distances.sort(Comparator.comparing(o -> Integer.valueOf(o.substring(0, o.indexOf(DISTANCE_SEPARATOR)))));
         return result + ": " + String.join(", ", distances) + "]";
     }
 

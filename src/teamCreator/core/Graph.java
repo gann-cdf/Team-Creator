@@ -14,13 +14,9 @@ public class Graph {
         this(data, IslandAvoidance.CompletionMedian, MergeType.Maximizing);
     }
 
-    ;
-
     public Graph(Map<String, List<String>> data, IslandAvoidance islandAvoidance, MergeType merge) {
         Map<String, Node> nameDirectory = new HashMap<>();
-        Iterator<Map.Entry<String, List<String>>> iterator = data.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, List<String>> namePreferencesPair = iterator.next();
+        for (Map.Entry<String, List<String>> namePreferencesPair : data.entrySet()) {
             String myName = namePreferencesPair.getKey();
             List<String> myPreferences = namePreferencesPair.getValue();
             if (myName.length() > 0) {
@@ -70,7 +66,7 @@ public class Graph {
         }
         for (Node n : nodes) {
             for (Node neighbor : nodes) {
-                if (neighbor != n && !n.getEdges().keySet().contains(neighbor)) {
+                if (neighbor != n && !n.getEdges().containsKey(neighbor)) {
                     n.addEdge(neighbor, createEdge(merge, arbitraryDistance));
                 }
             }
@@ -187,11 +183,11 @@ public class Graph {
     }
 
     public String toString() {
-        String result = count() + " teams:\n";
+        StringBuilder result = new StringBuilder(count() + " teams:\n");
         for (Node n : nodes) {
-            result += "\t" + n + "\n";
+            result.append("\t").append(n).append("\n");
         }
-        return result;
+        return result.toString();
     }
 
     public List<Node> getNodes() {

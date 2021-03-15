@@ -32,8 +32,8 @@ public class Parameters implements DocumentListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 controller.handleParameters(
-                        Integer.valueOf(teams.getText()),
-                        Integer.valueOf(teamSize.getText()),
+                        Integer.parseInt(teams.getText()),
+                        Integer.parseInt(teamSize.getText()),
                         (Graph.IslandAvoidance) islandAvoidance.getSelectedItem(),
                         (MergeType) mergeType.getSelectedItem(),
                         saveAuditLog.isSelected()
@@ -63,11 +63,11 @@ public class Parameters implements DocumentListener {
         if (syncTeamSize.isSelected()) {
             if (e.getDocument() == teams.getDocument()) {
                 teamSize.getDocument().removeDocumentListener(this);
-                teamSize.setText(Integer.toString((int) Math.ceil(count / Integer.valueOf(teams.getText()))));
+                teamSize.setText(Integer.toString((int) Math.ceil(count / Integer.parseInt(teams.getText()))));
                 teamSize.getDocument().addDocumentListener(this);
             } else if (e.getDocument() == teamSize.getDocument()) {
                 teams.getDocument().removeDocumentListener(this);
-                teams.setText(Integer.toString((int) Math.ceil(count / Integer.valueOf(teamSize.getText()))));
+                teams.setText(Integer.toString((int) Math.ceil(count / Integer.parseInt(teamSize.getText()))));
                 teams.getDocument().addDocumentListener(this);
             }
         }
